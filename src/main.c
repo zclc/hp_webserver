@@ -11,6 +11,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+
+#include <zlog.h>
+
 #include "util.h"
 #include "timer.h"
 #include "http.h"
@@ -43,11 +46,28 @@ static void usage() {
 	);
 }
 
+zlog_category_t *g_zc;
+
 int main(int argc, char* argv[]) {
     int rc;
     int opt = 0;
     int options_index = 0;
     char *conf_file = CONF;
+
+    // zlog 初始化
+    int zlogrc;
+	zlogrc = zlog_init("conf/zlog.conf");
+	if (zlogrc) {
+		printf("init failed\n");
+		exit(-1);
+	}
+
+	g_zc = zlog_get_category("zlogdemo");
+	if (!g_zc) {
+		printf("get category fail\n");
+		zlog_fini();
+		exit(-2);
+	}
 
     /*
     * parse argv 
@@ -77,6 +97,8 @@ int main(int argc, char* argv[]) {
     }
 
     debug("conffile = %s", conf_file);
+
+    debug("%d", sizeof(zv_http_request_t));
 
     if (optind < argc) {
         log_err("non-option ARGV-elements: ");
@@ -185,6 +207,7 @@ int main(int argc, char* argv[]) {
                     check(rc == 0, "make_socket_non_blocking");
                     log_info("new connection fd %d", infd);
                     
+                    // 内存池TODO
                     zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
                     if (request == NULL) {
                         log_err("malloc(sizeof(zv_http_request_t))");

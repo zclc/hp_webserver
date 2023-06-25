@@ -10,12 +10,15 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <zlog.h>
 #include "http.h"
 #include "http_parse.h"
 #include "http_request.h"
 #include "epoll.h"
 #include "error.h"
 #include "timer.h"
+
+extern zlog_category_t *g_zc;
 
 static const char* get_file_type(const char *type);
 static void parse_uri(char *uri, int length, char *filename, char *querystring);
@@ -110,7 +113,11 @@ void do_request(void *ptr) {
 
         log_info("method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
         log_info("uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
-
+        
+        zlog_info(g_zc,"method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
+        zlog_info(g_zc,"uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
+        
+        
         debug("ready to parse request body");
         // 处理http对象的请求体
         rc = zv_http_parse_request_body(r);

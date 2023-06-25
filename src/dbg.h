@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <zlog.h>
+
 #ifdef NDEBUG
 #define debug(M, ...)
 #else
