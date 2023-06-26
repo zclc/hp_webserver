@@ -10,6 +10,8 @@
 #include "error.h"
 #include "memory_pool.h"
 
+extern zlog_category_t *g_zc;
+
 /**
  * @brief 处理http请求对象 r的请求体
  * 
@@ -320,7 +322,7 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
     state = r->state; // 初始状态sw_start
     check(state == 0, "state should be 0");
 
-    //log_info("ready to parese request body, start = %d, last= %d", r->pos, r->last);
+    zlog_info(g_zc, "ready to parese request body, start = %d, last= %d", r->pos, r->last);
 
     zv_http_header_t *hd; 
     for (pi = r->pos; pi < r->last; pi++) {
@@ -388,8 +390,13 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
                 hd->key_end     = r->cur_header_key_end;
                 hd->value_start = r->cur_header_value_start;
                 hd->value_end   = r->cur_header_value_end;
-
+                
+                printf("&(hd->list) %p\n", &(hd->list));
+                printf(" &(r->list) = %p\n",  &(r->list));
+                zlog_info(g_zc, "lis_head");
+                // 把hd->list 添加到r->list 后
                 list_add(&(hd->list), &(r->list));
+                zlog_info(g_zc, "lis_head");
 
                 break;
             } else {

@@ -180,7 +180,7 @@ int main(int argc, char* argv[]) {
     /* epoll_wait loop */
     while (1) {
         time = zv_find_timer();
-        debug("wait time = %d", time);
+        zlog_debug(g_zc,"wait time = %d", time);
         n = zv_epoll_wait(epfd, events, MAXEVENTS, time);
         // 处理超时链接
         zv_handle_expire_timers();
@@ -207,10 +207,11 @@ int main(int argc, char* argv[]) {
 
                     rc = make_socket_non_blocking(infd);
                     check(rc == 0, "make_socket_non_blocking");
-                    log_info("new connection fd %d", infd);
+                    zlog_info(g_zc,"new connection fd %d", infd);
                     
                     // 内存池TODO
-                    zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
+                    // zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
+                    zv_http_request_t *request = (zv_http_request_t *)Allocate(MEMPOOL_HTTP_REQUESET_T);
                     if (request == NULL) {
                         log_err("malloc(sizeof(zv_http_request_t))");
                         break;
@@ -233,11 +234,11 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                log_info("new data from fd %d", fd);
-                rc = threadpool_add(tp, do_request, events[i].data.ptr);
-                check(rc == 0, "threadpool_add");
+                zlog_info(g_zc,"new data from fd %d", fd);
+                // rc = threadpool_add(tp, do_request, events[i].data.ptr);
+                // check(rc == 0, "threadpool_add");
 
-                // do_request(events[i].data.ptr);
+                do_request(events[i].data.ptr);
             }
         }   //end of for
     }   // end of while(1)

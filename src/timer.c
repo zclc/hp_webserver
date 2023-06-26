@@ -26,7 +26,7 @@ static void zv_time_update() {
     check(rc == 0, "zv_time_update: gettimeofday error");
 
     zv_current_msec = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-    debug("in zv_time_update, time = %zu", zv_current_msec);
+    // debug("in zv_time_update, time = %zu", zv_current_msec);
 }
 
 
@@ -45,7 +45,7 @@ int zv_find_timer() {
     int rc;
 
     while (!zv_pq_is_empty(&zv_timer)) {
-        debug("zv_find_timer");
+        // debug("zv_find_timer");
         zv_time_update();
         timer_node = (zv_timer_node *)zv_pq_min(&zv_timer);
         check(timer_node != NULL, "zv_pq_min error");
@@ -58,9 +58,9 @@ int zv_find_timer() {
         }
              
         time = (int) (timer_node->key - zv_current_msec);
-        debug("in zv_find_timer, key = %zu, cur = %zu",
-                timer_node->key,
-                zv_current_msec);
+        // debug("in zv_find_timer, key = %zu, cur = %zu",
+        //         timer_node->key,
+        //         zv_current_msec);
         time = (time > 0? time: 0);
         break;
     }
@@ -69,12 +69,12 @@ int zv_find_timer() {
 }
 
 void zv_handle_expire_timers() {
-    debug("in zv_handle_expire_timers");
+    // debug("in zv_handle_expire_timers");
     zv_timer_node *timer_node;
     int rc;
 
     while (!zv_pq_is_empty(&zv_timer)) {
-        debug("zv_handle_expire_timers, size = %zu", zv_pq_size(&zv_timer));
+        // debug("zv_handle_expire_timers, size = %zu", zv_pq_size(&zv_timer));
         zv_time_update();
         timer_node = (zv_timer_node *)zv_pq_min(&zv_timer);
         check(timer_node != NULL, "zv_pq_min error");
@@ -107,7 +107,7 @@ void zv_add_timer(zv_http_request_t *rq, size_t timeout, timer_handler_pt handle
     zv_time_update();
     rq->timer = timer_node;
     timer_node->key = zv_current_msec + timeout;
-    debug("in zv_add_timer, key = %zu", timer_node->key);
+    // debug("in zv_add_timer, key = %zu", timer_node->key);
     timer_node->deleted = 0;
     timer_node->handler = handler;
     timer_node->rq = rq;
@@ -117,7 +117,7 @@ void zv_add_timer(zv_http_request_t *rq, size_t timeout, timer_handler_pt handle
 }
 
 void zv_del_timer(zv_http_request_t *rq) {
-    debug("in zv_del_timer");
+    // debug("in zv_del_timer");
     zv_time_update();
     zv_timer_node *timer_node = rq->timer;
     check(timer_node != NULL, "zv_del_timer: rq->timer is NULL");

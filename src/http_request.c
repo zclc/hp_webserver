@@ -17,6 +17,8 @@
 #include "error.h"
 #include "memory_pool.h"
 
+extern zlog_category_t *g_zc;
+
 static int zv_http_process_ignore(zv_http_request_t *r, zv_http_out_t *out, char *data, int len);
 static int zv_http_process_connection(zv_http_request_t *r, zv_http_out_t *out, char *data, int len);
 static int zv_http_process_if_modified_since(zv_http_request_t *r, zv_http_out_t *out, char *data, int len);
@@ -67,6 +69,7 @@ void zv_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
     zv_http_header_handle_t *header_in;
     int len;
 
+    debug("lis_head");
     list_for_each(pos, &(r->list)) {
         hd = list_entry(pos, zv_http_header_t, list);
         /* handle */
@@ -82,10 +85,10 @@ void zv_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
                 break;
             }    
         }
-
+        debug("lis_head");
         /* delete it from the original list */
         list_del(pos);
-        debug("-------");
+        debug("lis_head");
         free(hd);
     }
 }
@@ -94,7 +97,8 @@ int zv_http_close_conn(zv_http_request_t *r) {
     // NOTICE: closing a file descriptor will cause it to be removed from all epoll sets automatically
     // http://stackoverflow.com/questions/8707601/is-it-necessary-to-deregister-a-socket-from-epoll-before-closing-it
     close(r->fd);
-    free(r);
+    // free(r);
+    Deallocate(r, MEMPOOL_HTTP_REQUESET_T);
 
     return ZV_OK;
 }

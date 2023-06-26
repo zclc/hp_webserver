@@ -11,6 +11,7 @@
 #define NULL 0
 #endif
 
+#include <stdio.h>
 /*
 * list_head, reference linux kernel implementation
 */
@@ -33,14 +34,32 @@ typedef struct list_head list_head;
  * 在 prev 和 next之间插入一个新结点 _new
 */
 static inline void __list_add(struct list_head *_new, struct list_head *prev, struct list_head *next) {
-    _new->next = next;
-    next->prev = _new;
-    prev->next = _new;
-    _new->prev = prev;
+
+    if(next == NULL)
+    {
+        _new->next = NULL;
+        prev->next = _new;
+        _new->prev = prev;
+    }
+    else
+    {
+        _new->next = next;
+        next->prev = _new;
+
+        prev->next = _new;
+        _new->prev = prev;
+    }
+
 }
 
 static inline void list_add(struct list_head *_new, struct list_head *head) {
+    
+    printf("head = %p\n", head);
+    printf("_new = %p\n", _new);
+    printf("head->next = %p\n", head->next);
     __list_add(_new, head, head->next);
+
+    printf("add");
 }
 
 static inline void list_add_tail(struct list_head *_new, struct list_head *head) {

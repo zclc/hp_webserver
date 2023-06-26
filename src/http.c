@@ -111,8 +111,8 @@ void do_request(void *ptr) {
             goto err;
         }
 
-        log_info("method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
-        log_info("uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
+        // log_info("method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
+        // log_info("uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
         
         zlog_info(g_zc,"method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
         zlog_info(g_zc,"uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
@@ -168,12 +168,12 @@ void do_request(void *ptr) {
         serve_static(fd, filename, sbuf.st_size, out);
 
         if (!out->keep_alive) {
-            log_info("no keep_alive! ready to close");
-            debug("[error]---------");
+            zlog_info(g_zc,"no keep_alive! ready to close");
+            
             free(out);
             goto close;
         }
-        debug("[error]---------");
+        
         free(out);
 
     }
