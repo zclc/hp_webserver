@@ -8,6 +8,7 @@
 #include "http.h"
 #include "http_parse.h"
 #include "error.h"
+#include "memory_pool.h"
 
 /**
  * @brief 处理http请求对象 r的请求体

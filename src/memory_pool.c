@@ -3,9 +3,12 @@
 #include "http_request.h"
 #include "http.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
-FixedAllocor* mpool[MEMPOOL_TYPE_LEN];
+FixedAllocor mpool[MEMPOOL_TYPE_LEN];
+
+#include "dbg.h"
 
 size_t manage_type_size(TYPEINPOOL poolType)
 {
@@ -29,29 +32,39 @@ size_t manage_type_size(TYPEINPOOL poolType)
     }
 }
 
-void initChunk(MemoryPool* mp, Chunk* chunk)
-{
-
-}
 
 Chunk* create_chunk(TYPEINPOOL poolType)
 {
+    // 申请chunk的内存空间
     Chunk* chunk = (Chunk*)malloc(sizeof(Chunk));
-    assert(chunk != NULL);
+    if(chunk == NULL)
+    {
+        log_err("bad alloc chunk");
+        return NULL;
+    }
 
-    chunk->next = NULL;
-    chunk->blockSize= manage_type_size(poolType);
-    chunk->pData = (unsigned char*)malloc(manage_type_size(poolType)*(alloc->blocks));
-    assert(chunk != NULL);
+    
+    // 申请chunk中pData的内存空间
+    chunk->pData = (unsigned char*)malloc(manage_type_size(poolType)*(mpool[poolType].blocks));
+    if(chunk == NULL)
+    {
+        log_err("bad alloc chunk pdata");
+        free(chunk);
+        return NULL;
+    }
 
-    int i;
+    // 给chunk中每个block的头一个字节表示下一个可用空间的索引
     unsigned char* p = chunk->pData;
-    for ( i = 0; i < mpool[poolType]->blocks; p+=chunk->blockSize)
+    int i;
+    for ( i = 0; i < mpool[poolType].blocks; p+=mpool[poolType].blockSize)
     {
         *p = ++i;
     }
+
+    // 初始化chunk的信息
+    chunk->next = NULL;
     chunk->firstAvailableBlock = 0;
-    chunk->blocksAvailable = mpool[poolType]->blocks;
+    chunk->blocksAvailable = mpool[poolType].blocks;
 
     return chunk;
 }
@@ -63,99 +76,124 @@ Chunk* create_chunk(TYPEINPOOL poolType)
  * @param chunks 内存池中 一个FixedAlloctor中多少个chunks
  * @return MemoryPool* 内存池句柄
  */
-int memorypool_create(int blocks, int chunks, size_t chunkSize)
+int memorypool_create(unsigned char blocks)
 {
-    // MemoryPool* mp = (MemoryPool*)malloc(sizeof(MemoryPool));
-    // if(mp == NULL)
-    // {
-    //     return NULL;
-    // }
-
-    // // 初始化mp中的值
-    // mp->blocks = blocks;
-    // mp->chunks = chunks;
-    // mp->fixArrLen = MEMPOOL_TYPE_LEN; // TYPEINPOOL 中的最大值
-   
-    // // 分配chunks管理者的空间
-    // mp->fixArr = (FixedAllocor**)malloc(sizeof(FixedAllocor*));
-    // if(mp->fixArr == NULL)
-    // {
-    //     free(mp);
-    //     return NULL;
-    // }
-
     int i;
     for (i = 0; i < MEMPOOL_TYPE_LEN; i++)
     {
-        mpool[i] = (FixedAllocor*)malloc(sizeof(FixedAllocor));
-        if(mpool[i] == NULL)
-        {
-            goto mallocErr;
-        }
-        mpool[i]->chunks = chunks; 
-        mpool[i]->blocks = blocks;
-        mpool[i]->alloctorChunk = NULL;
-        mpool[i]->dealloctorChunk = NULL;
-        mpool[i]->chunk_num = 0;
-        mpool[i]->chunksHead = NULL;//挂的chunk为0
+        // 初始化mpool中FixedAllocator
+        mpool[i].chunksHead = (Chunk*)malloc(sizeof(Chunk));//挂的chunk为0
+        check_exit(mpool[i].chunksHead != NULL, "bad alloc");
+
+        mpool[i].chunksHead->next = NULL;
+        mpool[i].alloctorChunk = NULL;
+        mpool[i].dealloctorChunk = NULL;
+        
+        mpool[i].blocks = blocks;
+        mpool[i].blockSize = manage_type_size(i); // blockSize由传入的类型确定
+        mpool[i].blank_chunk_num = 0;
     }
-    
-   
 
     return MEM_TRUE;
-mallocErr:
-    for (i = 0; i < MEMPOOL_TYPE_LEN; i++)
-    {
-        if(mpool[i] != NULL)
-        {
-            free(mpool[i]);
-        }
-    }
-
-    return MEM_FALSE;
-
 }
 
 
-void* allocate(TYPEINPOOL poolType)
+void* Allocate(TYPEINPOOL poolType)
 {
-    Chunk* tmp = mpool[poolType]->chunksHead;
-    if(mpool[poolType]->alloctorChunk == NULL || mpool[poolType]->alloctorChunk->blocksAvailable == 0) // 当前结点没有chunk
+    Chunk* chunk = mpool[poolType].chunksHead->next;
+    unsigned char blockSize = mpool[poolType].blockSize;
+    unsigned char* presult = NULL;
+
+    // 遍历链表查找可用的chunk
+    for(;;chunk=chunk->next)
     {
-        for(;;tmp=tmp->next)
-        {
-            if(tmp == NULL)
-            {
-                Chunk* chunk = create_chunk(poolType);
-                if(chunk == NULL)
-                    return NULL;
-                
-                chunk->next = mpool[poolType]->chunksHead->next;
-                mpool[poolType]->chunksHead->next = chunk;
-
-                mpool[poolType]->alloctorChunk = chunk;
-            } 
-        }
-
-        mpool[poolType]->chunksHead->next = create_chunk(poolType);
-        if(mpool[poolType]->chunksHead->next == NULL)
-            return NULL;
-        
-        mpool[poolType]->alloctorChunk = mpool[poolType]->chunksHead->next;
-    }
-
-    if()
-    {
-        Chunk* chunk = create_chunk(poolType);
+        // 没有可用的chunk, 申请一个新的chunk
         if(chunk == NULL)
-            return NULL;
-        
-        chunk->next = mpool[poolType]->chunksHead->next;
-        mpool[poolType]->chunksHead->next = chunk;
+        {
+            // 申请一个新的区块
+            Chunk* newChunk = create_chunk(poolType);
+            if(newChunk == NULL) /* 申请失败返回NULL */
+                return NULL;
+            
+            // 申请成功 头插到head链表中
+            newChunk->next = mpool[poolType].chunksHead->next;
+            mpool[poolType].chunksHead->next = newChunk;
 
-        mpool[poolType]->alloctorChunk = chunk;
+            chunk = newChunk;
+        } 
+
+        // 该块有可用的block
+        if(chunk->blocksAvailable > 0)
+        {
+            presult = chunk->pData + (chunk->firstAvailableBlock)*(blockSize);
+            
+            // 更新该chunk的信息
+            chunk->firstAvailableBlock = *presult;
+            chunk->blocksAvailable--;
+
+            break;
+        }
     }
 
-
-
+    return (void*)presult; 
 }
+
+Chunk* VicinityFind(void* p, TYPEINPOOL poolType)
+{
+    size_t chunkLength = mpool[poolType].blocks * mpool[poolType].blockSize;
+    Chunk* curChunk = mpool[poolType].chunksHead->next;
+    unsigned char* uchP = (unsigned char*)p;
+
+    /* 遍历寻找p属于哪个chunk */
+    for (;curChunk != NULL;curChunk=curChunk->next)
+    {
+        if(uchP >= curChunk->pData && uchP < curChunk->pData + chunkLength)
+        {   
+            return curChunk;
+        }
+    }
+    
+    return NULL;
+}
+
+void Deallocate(void* p, TYPEINPOOL poolType)
+{
+    Chunk* deallocChunk = VicinityFind(p, poolType);
+    check_exit(deallocChunk != NULL, "p not own memory pool");
+    
+    unsigned char blockSize = mpool[poolType].blockSize;
+    /* p在chunk中的位置 */
+    unsigned char* toRelease = (unsigned char*)p;
+    *toRelease = deallocChunk->firstAvailableBlock; /* p的下一个可用block为当前的firstAvailableBlock */
+
+    /* 更新最新的availableBlock为 p所在block */
+    deallocChunk->firstAvailableBlock = (unsigned char)(toRelease - deallocChunk->pData)/blockSize;
+
+    // 该chunk的可用区块+1
+    deallocChunk->blocksAvailable++;
+
+    /* 如果该chunk空闲 */
+    if(deallocChunk->blocksAvailable == mpool[poolType].blocks)
+    {
+        mpool[poolType].blank_chunk_num++;
+    }
+
+    // 有两份空闲归还一块给操作系统,
+    if(mpool[poolType].blank_chunk_num == 2)
+    {
+        Chunk* curChunk = mpool[poolType].chunksHead->next;
+        Chunk* preChunk = mpool[poolType].chunksHead;
+        for (;curChunk != NULL;curChunk=curChunk->next, preChunk=preChunk->next)
+        {
+            if(curChunk->blocksAvailable == mpool[poolType].blocks)
+            {
+                preChunk->next = curChunk->next;
+                free(curChunk->pData);
+                free(curChunk);
+                --mpool[poolType].blank_chunk_num;
+                break;
+            }
+        }
+    }
+}
+

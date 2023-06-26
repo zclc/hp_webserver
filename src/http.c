@@ -169,9 +169,11 @@ void do_request(void *ptr) {
 
         if (!out->keep_alive) {
             log_info("no keep_alive! ready to close");
+            debug("[error]---------");
             free(out);
             goto close;
         }
+        debug("[error]---------");
         free(out);
 
     }

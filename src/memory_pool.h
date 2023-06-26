@@ -21,9 +21,8 @@ typedef enum
 
 struct _Chunk
 {
-    unsigned char firstAvailableBlock;
-    unsigned char blockSize;
     unsigned char* pData;
+    unsigned char firstAvailableBlock;
     unsigned char blocksAvailable;
     struct _Chunk* next;
 };
@@ -32,21 +31,18 @@ typedef struct _Chunk Chunk;
 typedef struct 
 {
     Chunk* chunksHead; // chunk链表
+    Chunk* chunksTail; 
     Chunk* alloctorChunk; // 指向将要分配块
     Chunk* dealloctorChunk; // 指向将要删除块
-    unsigned int chunks; // 一个fixedalloctor管理多少个chunk
-    unsigned int blocks; // 一个chunk拥有多少个block
-    unsigned int chunk_num;
+    unsigned char blocks; // 一个chunk拥有多少个block
+    unsigned char blockSize; // 一个block的大小
+    unsigned char blank_chunk_num; // 空闲的chunk个数
 }FixedAllocor;
 
-
-
-
-
-
+extern FixedAllocor mpool[MEMPOOL_TYPE_LEN];
 
 // 传一个类型返回给它一个指针
-void* allocate(TYPEINPOOL pool_data_t);
+void* Allocate(TYPEINPOOL pool_data_t);
 
 /**
  * @brief 创建一个内存池
@@ -57,4 +53,8 @@ void* allocate(TYPEINPOOL pool_data_t);
  */
 
 
+int memorypool_create(unsigned char blocks);
 
+
+
+void Deallocate(void* p, TYPEINPOOL poolType);

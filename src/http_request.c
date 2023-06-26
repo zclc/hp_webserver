@@ -15,6 +15,7 @@
 #include "http.h"
 #include "http_request.h"
 #include "error.h"
+#include "memory_pool.h"
 
 static int zv_http_process_ignore(zv_http_request_t *r, zv_http_out_t *out, char *data, int len);
 static int zv_http_process_connection(zv_http_request_t *r, zv_http_out_t *out, char *data, int len);
@@ -84,6 +85,7 @@ void zv_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
 
         /* delete it from the original list */
         list_del(pos);
+        debug("-------");
         free(hd);
     }
 }

@@ -19,6 +19,7 @@
 #include "http.h"
 #include "epoll.h"
 #include "threadpool.h"
+#include "memory_pool.h"
 
 #define CONF "zaver.conf"
 #define PROGRAM_VERSION "0.1"
@@ -115,6 +116,7 @@ int main(int argc, char* argv[]) {
     rc = read_conf(conf_file, &cf, conf_buf, BUFLEN);
     check(rc == ZV_CONF_OK, "read conf err");
 
+    memorypool_create(64);
     /*
     *   install signal handle for SIGPIPE
     *   when a fd is closed by remote, writing to this fd will cause system send
@@ -160,10 +162,10 @@ int main(int argc, char* argv[]) {
     /*
     * create thread pool
     */
-    /*
+    
     zv_threadpool_t *tp = threadpool_init(cf.thread_num);
     check(tp != NULL, "threadpool_init error");
-    */
+    
     
     /*
      * initialize timer
@@ -232,10 +234,10 @@ int main(int argc, char* argv[]) {
                 }
 
                 log_info("new data from fd %d", fd);
-                //rc = threadpool_add(tp, do_request, events[i].data.ptr);
-                //check(rc == 0, "threadpool_add");
+                rc = threadpool_add(tp, do_request, events[i].data.ptr);
+                check(rc == 0, "threadpool_add");
 
-                do_request(events[i].data.ptr);
+                // do_request(events[i].data.ptr);
             }
         }   //end of for
     }   // end of while(1)
