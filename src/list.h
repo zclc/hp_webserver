@@ -23,7 +23,7 @@ struct list_head {
 typedef struct list_head list_head;
 
 #define INIT_LIST_HEAD(ptr) do {\
-    struct list_head *_ptr = (struct list_head *)ptr;   \
+    struct list_head *_ptr = (struct list_head *)(ptr);   \
     (_ptr)->next = (_ptr); (_ptr->prev) = (_ptr);       \
 } while(0)
 
@@ -34,22 +34,10 @@ typedef struct list_head list_head;
  * 在 prev 和 next之间插入一个新结点 _new
 */
 static inline void __list_add(struct list_head *_new, struct list_head *prev, struct list_head *next) {
-
-    if(next == NULL)
-    {
-        _new->next = NULL;
-        prev->next = _new;
-        _new->prev = prev;
-    }
-    else
-    {
         _new->next = next;
         next->prev = _new;
-
         prev->next = _new;
         _new->prev = prev;
-    }
-
 }
 
 static inline void list_add(struct list_head *_new, struct list_head *head) {
@@ -85,11 +73,14 @@ static inline void list_del(struct list_head *entry) {
 /*
 *   check whether the list is empty
 */
+// 如果head 的 next 和 head的prev都是head => list为空
+// 为空 1, 非空 0
 static inline int list_empty(struct list_head *head) {
     return (head->next == head) && (head->prev == head);
 }
 
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+
 
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
@@ -99,9 +90,11 @@ static inline int list_empty(struct list_head *head) {
 #define list_entry(ptr, type, member) \
 	container_of(ptr, type, member)
 
+// pos 取双向链表中的每个元素，head不存数据，从head往后查找 
 #define list_for_each(pos, head) \
 	for (pos = (head)->next; pos != (head); pos = pos->next)
 
+// pos 取双向链表中的每个元素，head不存数据，从head往前查找 
 #define list_for_each_prev(pos, head) \
     for (pos = (head)->prev; pos != (head); pos = pos->prev)
 

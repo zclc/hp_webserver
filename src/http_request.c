@@ -16,6 +16,7 @@
 #include "http_request.h"
 #include "error.h"
 #include "memory_pool.h"
+#include "epoll.h"
 
 extern zlog_category_t *g_zc;
 
@@ -39,6 +40,7 @@ int zv_init_request_t(zv_http_request_t *r, int fd, int epfd, zv_conf_t *cf) {
     r->root = cf->root;
     INIT_LIST_HEAD(&(r->list));
 
+    zlog_info(g_zc, "zv_init_request_t ZV_OK");
     return ZV_OK;
 }
 
@@ -69,7 +71,6 @@ void zv_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
     zv_http_header_handle_t *header_in;
     int len;
 
-    debug("lis_head");
     list_for_each(pos, &(r->list)) {
         hd = list_entry(pos, zv_http_header_t, list);
         /* handle */
@@ -79,26 +80,38 @@ void zv_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
             header_in++) {
             if (strncmp(hd->key_start, header_in->name, hd->key_end - hd->key_start) == 0) {
             
-                //debug("key = %.*s, value = %.*s", hd->key_end-hd->key_start, hd->key_start, hd->value_end-hd->value_start, hd->value_start);
+                debug("key = %.*s, value = %.*s", hd->key_end-hd->key_start, hd->key_start, hd->value_end-hd->value_start, hd->value_start);
                 len = hd->value_end - hd->value_start;
                 (*(header_in->handler))(r, o, hd->value_start, len);
                 break;
             }    
         }
-        debug("lis_head");
         /* delete it from the original list */
         list_del(pos);
-        debug("lis_head");
         free(hd);
     }
+
 }
 
 int zv_http_close_conn(zv_http_request_t *r) {
     // NOTICE: closing a file descriptor will cause it to be removed from all epoll sets automatically
     // http://stackoverflow.com/questions/8707601/is-it-necessary-to-deregister-a-socket-from-epoll-before-closing-it
+    zv_epoll_del(r->epfd, r->fd, NULL);
     close(r->fd);
     // free(r);
-    Deallocate(r, MEMPOOL_HTTP_REQUESET_T);
+    list_head* pos;
+    list_head* posNext;
+    // for(pos = (r->list).next; pos != &(r->list); pos = posNext)
+    // {
+    //     posNext = pos->next;
+    //     free(pos);
+    // }
+    
+    zlog_info(g_zc, "Deallocate");
+    if(r)
+        Deallocate(r, MEMPOOL_HTTP_REQUESET_T);
+    
+    r = NULL;
 
     return ZV_OK;
 }

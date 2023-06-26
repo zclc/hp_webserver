@@ -63,8 +63,10 @@ void do_request(void *ptr) {
     ROOT = r->root; // 
     char *plast = NULL;
     size_t remain_size;
-    
-    zv_del_timer(r);
+    printf(" &(r->list) = %p\n",  (r->list));
+    printf("(r->list).next %p\n", (r->list).next);
+    printf("(r->list).prev %p\n", (r->list).prev);
+    // zv_del_timer(r);
     for(;;) {
         // plast 指向 buf中需要写入数据的第一个位置
         plast = &r->buf[r->last % MAX_BUF];
@@ -97,7 +99,6 @@ void do_request(void *ptr) {
         }
 
         // r->last指向buf缓冲区下一个可用位置
-        // 
         r->last += n;
         check(r->last - r->pos < MAX_BUF, "request buffer overflow!");
         
@@ -111,12 +112,8 @@ void do_request(void *ptr) {
             goto err;
         }
 
-        // log_info("method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
-        // log_info("uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
-        
         zlog_info(g_zc,"method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
         zlog_info(g_zc,"uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
-        
         
         debug("ready to parse request body");
         // 处理http对象的请求体
@@ -144,7 +141,7 @@ void do_request(void *ptr) {
 
         // 如果文件不存在
         if(stat(filename, &sbuf) < 0) {
-            do_error(fd, filename, "404", "Not Found", "zaver can't find the file");
+            do_error(fd, filename, "404", "Not Found", "Can't find the file");
             continue;
         }
 
@@ -175,7 +172,6 @@ void do_request(void *ptr) {
         }
         
         free(out);
-
     }
     
     // fd 没有数据可读 errno == EAGAIN
@@ -183,13 +179,15 @@ void do_request(void *ptr) {
     event.data.ptr = ptr;
     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT; 
 
-    zv_epoll_mod(r->epfd, r->fd, &event);
-    zv_add_timer(r, TIMEOUT_DEFAULT, zv_http_close_conn);
+    //zv_epoll_mod(r->epfd, r->fd, &event);
+    //zv_add_timer(r, TIMEOUT_DEFAULT, zv_http_close_conn);
     return;
 
 err:
 close:
+    log_info("rc rc before");
     rc = zv_http_close_conn(r);
+    log_info("rc rc");
     check(rc == 0, "do_request: zv_http_close_conn");
 }
 
@@ -252,8 +250,8 @@ static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *lo
     // sprintf(header, "%sConnection: close\r\n", header);
     // sprintf(header, "%sContent-length: %d\r\n\r\n", header, (int)strlen(body));
     //log_info("header  = \n %s\n", header);
-    rio_writen(fd, header, strlen(header));
-    rio_writen(fd, body, strlen(body));
+    //rio_writen(fd, header, strlen(header));
+    //rio_writen(fd, body, strlen(body));
     //log_info("leave clienterror\n");
     return;
 }

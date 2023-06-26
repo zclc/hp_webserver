@@ -390,13 +390,11 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
                 hd->key_end     = r->cur_header_key_end;
                 hd->value_start = r->cur_header_value_start;
                 hd->value_end   = r->cur_header_value_end;
-                
-                printf("&(hd->list) %p\n", &(hd->list));
-                printf(" &(r->list) = %p\n",  &(r->list));
-                zlog_info(g_zc, "lis_head");
+                hd->list.next = NULL;
+                hd->list.prev = NULL;
+
                 // 把hd->list 添加到r->list 后
                 list_add(&(hd->list), &(r->list));
-                zlog_info(g_zc, "lis_head");
 
                 break;
             } else {

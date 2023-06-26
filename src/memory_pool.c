@@ -145,6 +145,7 @@ Chunk* VicinityFind(void* p, TYPEINPOOL poolType)
     unsigned char* uchP = (unsigned char*)p;
 
     /* 遍历寻找p属于哪个chunk */
+    // debug("blocksAvailable = %d", curChunk->blocksAvailable);
     for (;curChunk != NULL;curChunk=curChunk->next)
     {
         if(uchP >= curChunk->pData && uchP < curChunk->pData + chunkLength)
@@ -153,11 +154,13 @@ Chunk* VicinityFind(void* p, TYPEINPOOL poolType)
         }
     }
     
+    debug("curChunk = %p", curChunk);
     return NULL;
 }
 
 void Deallocate(void* p, TYPEINPOOL poolType)
 {
+    debug("p = %p", p);
     Chunk* deallocChunk = VicinityFind(p, poolType);
     check_exit(deallocChunk != NULL, "p not own memory pool");
     

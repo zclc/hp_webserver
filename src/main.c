@@ -218,11 +218,15 @@ int main(int argc, char* argv[]) {
                     }
 
                     zv_init_request_t(request, infd, epfd, &cf);
+                    printf("request ========= %p ", request);
+                    printf("**** &(r->list) = %p\n",  &(request->list));
+                    printf("(r->list).next %p\n", (request->list).next);
+                    printf("(r->list).prev %p\n", (request->list).prev);
                     event.data.ptr = (void *)request;
                     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
 
                     zv_epoll_add(epfd, infd, &event);
-                    zv_add_timer(request, TIMEOUT_DEFAULT, zv_http_close_conn);
+                    // zv_add_timer(request, TIMEOUT_DEFAULT, zv_http_close_conn);
                 }   // end of while of accept
 
             } else {
@@ -235,8 +239,19 @@ int main(int argc, char* argv[]) {
                 }
 
                 zlog_info(g_zc,"new data from fd %d", fd);
-                // rc = threadpool_add(tp, do_request, events[i].data.ptr);
-                // check(rc == 0, "threadpool_add");
+
+                zv_http_request_t *request = (zv_http_request_t *)(events[i].data.ptr);
+
+                // log_info("--- &(r->list) = %p\n----",  &(request->list));
+                // printf("(r->list).next %p\n", (request->list).next);
+                // printf("(r->list).prev %p\n", (request->list).prev);
+                (request->list).next =  &(request->list);
+                // printf("--- &(r->list) = %p\n----",  &(request->list));
+                // printf("(r->list).next %p\n", (request->list).next);
+                // printf("(r->list).prev %p\n", (request->list).prev);
+                
+                rc = threadpool_add(tp, do_request, events[i].data.ptr);
+                check(rc == 0, "threadpool_add");
 
                 do_request(events[i].data.ptr);
             }
