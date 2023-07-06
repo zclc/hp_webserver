@@ -51,7 +51,7 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
         p = (unsigned char *)&r->buf[pi % MAX_BUF]; // p 指向待处理字符
         
         ch = *p;  
-
+        zlog_warn(g_zc, "aaa");
         switch (state) {
 
         /* HTTP methods: GET, HEAD, POST */

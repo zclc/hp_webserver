@@ -15,7 +15,7 @@
 #include <zlog.h>
 
 #include "util.h"
-#include "timer.h"
+// #include "timer.h"
 #include "http.h"
 #include "epoll.h"
 #include "threadpool.h"
@@ -45,6 +45,7 @@ static void usage() {
 	"  -?|-h|--help             This information.\n"
 	"  -V|--version             Display program version.\n"
 	);
+
 }
 
 zlog_category_t *g_zc;
@@ -97,9 +98,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    debug("conffile = %s", conf_file);
-
-    debug("%d", sizeof(zv_http_request_t));
+    zlog_info(g_zc,"conffile = %s", conf_file);
 
     if (optind < argc) {
         log_err("non-option ARGV-elements: ");
@@ -117,6 +116,8 @@ int main(int argc, char* argv[]) {
     check(rc == ZV_CONF_OK, "read conf err");
 
     memorypool_create(64);
+
+
     /*
     *   install signal handle for SIGPIPE
     *   when a fd is closed by remote, writing to this fd will cause system send
@@ -151,7 +152,7 @@ int main(int argc, char* argv[]) {
     struct epoll_event event;
     
     // 创建一个http请求对象
-    zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
+    zv_http_request_t *request =(zv_http_request_t *)Allocate(MEMPOOL_HTTP_REQUESET_T);
     zv_init_request_t(request, listenfd, epfd, &cf);
 
     // 将listen fd 设置为水平触发，监听可读事件
@@ -170,7 +171,7 @@ int main(int argc, char* argv[]) {
     /*
      * initialize timer
      */
-    zv_timer_init();
+    // zv_timer_init();
 
     log_info("zaver started.");
     int n;
@@ -179,11 +180,11 @@ int main(int argc, char* argv[]) {
 
     /* epoll_wait loop */
     while (1) {
-        time = zv_find_timer();
+        //time = zv_find_timer();
         zlog_debug(g_zc,"wait time = %d", time);
-        n = zv_epoll_wait(epfd, events, MAXEVENTS, time);
+        n = zv_epoll_wait(epfd, events, MAXEVENTS, 0);
         // 处理超时链接
-        zv_handle_expire_timers();
+        // zv_handle_expire_timers();
         
         for (i = 0; i < n; i++) {
             zv_http_request_t *r = (zv_http_request_t *)events[i].data.ptr;
@@ -200,7 +201,7 @@ int main(int argc, char* argv[]) {
                             /* we have processed all incoming connections */
                             break;
                         } else {
-                            log_err("accept");
+                            zlog_error(g_zc,"accept");
                             break;
                         }
                     }
@@ -213,22 +214,18 @@ int main(int argc, char* argv[]) {
                     // zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
                     zv_http_request_t *request = (zv_http_request_t *)Allocate(MEMPOOL_HTTP_REQUESET_T);
                     if (request == NULL) {
-                        log_err("malloc(sizeof(zv_http_request_t))");
+                        zlog_error(g_zc,"malloc(sizeof(zv_http_request_t))");
                         break;
                     }
 
                     zv_init_request_t(request, infd, epfd, &cf);
-                    printf("request ========= %p ", request);
-                    printf("**** &(r->list) = %p\n",  &(request->list));
-                    printf("(r->list).next %p\n", (request->list).next);
-                    printf("(r->list).prev %p\n", (request->list).prev);
+        
                     event.data.ptr = (void *)request;
                     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
 
                     zv_epoll_add(epfd, infd, &event);
                     // zv_add_timer(request, TIMEOUT_DEFAULT, zv_http_close_conn);
                 }   // end of while of accept
-
             } else {
                 if ((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -245,6 +242,8 @@ int main(int argc, char* argv[]) {
                 // log_info("--- &(r->list) = %p\n----",  &(request->list));
                 // printf("(r->list).next %p\n", (request->list).next);
                 // printf("(r->list).prev %p\n", (request->list).prev);
+                zlog_info(g_zc, "[%p]", &request->list);
+                zlog_info(g_zc, "[%p]", &(request->list).next);
                 (request->list).next =  &(request->list);
                 // printf("--- &(r->list) = %p\n----",  &(request->list));
                 // printf("(r->list).next %p\n", (request->list).next);
@@ -253,7 +252,7 @@ int main(int argc, char* argv[]) {
                 rc = threadpool_add(tp, do_request, events[i].data.ptr);
                 check(rc == 0, "threadpool_add");
 
-                do_request(events[i].data.ptr);
+                // do_request(events[i].data.ptr);
             }
         }   //end of for
     }   // end of while(1)

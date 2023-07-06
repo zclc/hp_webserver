@@ -16,83 +16,83 @@
 #include "http_request.h"
 #include "epoll.h"
 #include "error.h"
-#include "timer.h"
+// #include "timer.h"
 
 extern zlog_category_t *g_zc;
 
-static const char* get_file_type(const char *type);
+static const char *get_file_type(const char *type);
 static void parse_uri(char *uri, int length, char *filename, char *querystring);
 static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
 static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out);
 static char *ROOT = NULL;
 
-mime_type_t zaver_mime[] = 
-{
-    {".html", "text/html"},
-    {".xml", "text/xml"},
-    {".xhtml", "application/xhtml+xml"},
-    {".txt", "text/plain"},
-    {".rtf", "application/rtf"},
-    {".pdf", "application/pdf"},
-    {".word", "application/msword"},
-    {".png", "image/png"},
-    {".gif", "image/gif"},
-    {".jpg", "image/jpeg"},
-    {".jpeg", "image/jpeg"},
-    {".au", "audio/basic"},
-    {".mpeg", "video/mpeg"},
-    {".mpg", "video/mpeg"},
-    {".avi", "video/x-msvideo"},
-    {".gz", "application/x-gzip"},
-    {".tar", "application/x-tar"},
-    {".css", "text/css"},
-    {NULL ,"text/plain"}
-};
+mime_type_t zaver_mime[] =
+    {
+        {".html", "text/html"},
+        {".xml", "text/xml"},
+        {".xhtml", "application/xhtml+xml"},
+        {".txt", "text/plain"},
+        {".rtf", "application/rtf"},
+        {".pdf", "application/pdf"},
+        {".word", "application/msword"},
+        {".png", "image/png"},
+        {".gif", "image/gif"},
+        {".jpg", "image/jpeg"},
+        {".jpeg", "image/jpeg"},
+        {".au", "audio/basic"},
+        {".mpeg", "video/mpeg"},
+        {".mpg", "video/mpeg"},
+        {".avi", "video/x-msvideo"},
+        {".gz", "application/x-gzip"},
+        {".tar", "application/x-tar"},
+        {".css", "text/css"},
+        {NULL, "text/plain"}};
 
 /**
  * @brief 处理http请求
- *  
- * @param ptr http请求对象 
+ *
+ * @param ptr http请求对象
  */
-void do_request(void *ptr) {
+void do_request(void *ptr)
+{
     zv_http_request_t *r = (zv_http_request_t *)ptr;
-    int fd = r->fd; // 
+    int fd = r->fd; //
     int rc, n;
     char filename[SHORTLINE];
     struct stat sbuf; // 文件信息
-    ROOT = r->root; // 
+    ROOT = r->root;   //
     char *plast = NULL;
     size_t remain_size;
-    printf(" &(r->list) = %p\n",  (r->list));
-    printf("(r->list).next %p\n", (r->list).next);
-    printf("(r->list).prev %p\n", (r->list).prev);
+
     // zv_del_timer(r);
-    for(;;) {
+    for (;;)
+    {
         // plast 指向 buf中需要写入数据的第一个位置
         plast = &r->buf[r->last % MAX_BUF];
         remain_size = MIN(MAX_BUF - (r->last - r->pos) - 1, MAX_BUF - r->last % MAX_BUF);
-        
+
         // check(INT_MAX - r->last < MAX_BUF, "request buffer overflow!");
-       
 
         // 将读到的信息追加到buf中
         n = read(fd, plast, remain_size);
         check(r->last - r->pos < MAX_BUF, "request buffer overflow!");
 
         // 读到0客户端关闭连接
-        if (n == 0) {   
+        if (n == 0)
+        {
             // EOF
-            log_info("read return 0, ready to close fd %d, remain_size = %zu", fd, remain_size);
+            zlog_info(g_zc, "read return 0, ready to close fd %d, remain_size = %zu", fd, remain_size);
             goto err;
         }
-        
-        
+
         /* 当 read() 函数的返回值小于0且 errno 的值为 EAGAIN 时，
         表示在非阻塞模式下，当前没有可用的数据可供读取。这是因为在非阻塞模式下，
         read() 函数不会阻塞等待数据的到达，而是立即返回。 */
-        if (n < 0) {
-            if (errno != EAGAIN) { // 其他错误 
-                log_err("read err, and errno = %d", errno);
+        if (n < 0)
+        {
+            if (errno != EAGAIN)
+            { // 其他错误
+                zlog_error(g_zc, "read err, and errno = %d", errno);
                 goto err;
             }
             break; // errno 为EAGAIN时无数据可读跳出循环
@@ -101,36 +101,44 @@ void do_request(void *ptr) {
         // r->last指向buf缓冲区下一个可用位置
         r->last += n;
         check(r->last - r->pos < MAX_BUF, "request buffer overflow!");
-        
-        log_info("ready to parse request line"); 
+
+        log_info("ready to parse request line");
         // 处理http对象的请求行
         rc = zv_http_parse_request_line(r);
-        if (rc == ZV_AGAIN) {
+        if (rc == ZV_AGAIN)
+        {
+            zlog_warn(g_zc, "zvAGAIN");
             continue;
-        } else if (rc != ZV_OK) {
-            log_err("rc != ZV_OK");
+        }
+        else if (rc != ZV_OK)
+        {
+            zlog_error(g_zc, "rc != ZV_OK");
             goto err;
         }
 
-        zlog_info(g_zc,"method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
-        zlog_info(g_zc,"uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
-        
-        debug("ready to parse request body");
+        zlog_info(g_zc, "method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
+        zlog_info(g_zc, "uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
+
+        zlog_info(g_zc, "ready to parse request body");
         // 处理http对象的请求体
         rc = zv_http_parse_request_body(r);
-        if (rc == ZV_AGAIN) {
+        if (rc == ZV_AGAIN)
+        {
             continue;
-        } else if (rc != ZV_OK) {
-            log_err("rc != ZV_OK");
+        }
+        else if (rc != ZV_OK)
+        {
+            zlog_error(g_zc, "rc != ZV_OK");
             goto err;
         }
-        
+
         /*
-        *   handle http header
-        */
+         *   handle http header
+         */
         zv_http_out_t *out = (zv_http_out_t *)malloc(sizeof(zv_http_out_t));
-        if (out == NULL) {
-            log_err("no enough space for zv_http_out_t");
+        if (out == NULL)
+        {
+            zlog_error(g_zc, "no enough space for zv_http_out_t");
             exit(1);
         }
 
@@ -140,7 +148,8 @@ void do_request(void *ptr) {
         parse_uri(r->uri_start, r->uri_end - r->uri_start, filename, NULL);
 
         // 如果文件不存在
-        if(stat(filename, &sbuf) < 0) {
+        if (stat(filename, &sbuf) < 0)
+        {
             do_error(fd, filename, "404", "Not Found", "Can't find the file");
             continue;
         }
@@ -149,38 +158,40 @@ void do_request(void *ptr) {
         if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))
         {
             do_error(fd, filename, "403", "Forbidden",
-                    "zaver can't read the file");
+                     "zaver can't read the file");
             continue;
         }
-        
+
         out->mtime = sbuf.st_mtime;
 
         zv_http_handle_header(r, out);
         check(list_empty(&(r->list)) == 1, "header list should be empty");
-        
-        if (out->status == 0) {
+
+        if (out->status == 0)
+        {
             out->status = ZV_HTTP_OK;
         }
 
         serve_static(fd, filename, sbuf.st_size, out);
 
-        if (!out->keep_alive) {
-            zlog_info(g_zc,"no keep_alive! ready to close");
-            
-            free(out);
-            goto close;
-        }
-        
-        free(out);
-    }
-    
-    // fd 没有数据可读 errno == EAGAIN
-    struct epoll_event event;
-    event.data.ptr = ptr;
-    event.events = EPOLLIN | EPOLLET | EPOLLONESHOT; 
+        // if (!out->keep_alive)
+        // {
+        //     zlog_info(g_zc, "no keep_alive! ready to close");
 
-    //zv_epoll_mod(r->epfd, r->fd, &event);
-    //zv_add_timer(r, TIMEOUT_DEFAULT, zv_http_close_conn);
+        //     free(out);
+        //     goto close;
+        // }
+
+        free(out);
+        goto close;
+    }
+
+    // fd 没有数据可读 errno == EAGAIN
+    // struct epoll_event event;
+    // event.data.ptr = ptr;
+    // event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+    // zv_epoll_mod(r->epfd, r->fd, &event);
+    // zv_add_timer(r, TIMEOUT_DEFAULT, zv_http_close_conn);
     return;
 
 err:
@@ -191,28 +202,34 @@ close:
     check(rc == 0, "do_request: zv_http_close_conn");
 }
 
-static void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
+static void parse_uri(char *uri, int uri_length, char *filename, char *querystring)
+{
     check(uri != NULL, "parse_uri: uri is NULL");
     uri[uri_length] = '\0';
 
     char *question_mark = strchr(uri, '?');
     int file_length;
-    if (question_mark) {
+    if (question_mark)
+    {
         file_length = (int)(question_mark - uri);
         debug("file_length = (question_mark - uri) = %d", file_length);
-    } else {
+    }
+    else
+    {
         file_length = uri_length;
         debug("file_length = uri_length = %d", file_length);
     }
 
-    if (querystring) {
-        //TODO
+    if (querystring)
+    {
+        // TODO
     }
-    
+
     strcpy(filename, ROOT);
 
     // uri_length can not be too long
-    if (uri_length > (SHORTLINE >> 1)) {
+    if (uri_length > (SHORTLINE >> 1))
+    {
         log_err("uri too long: %.*s", uri_length, uri);
         return;
     }
@@ -222,11 +239,13 @@ static void parse_uri(char *uri, int uri_length, char *filename, char *querystri
 
     char *last_comp = strrchr(filename, '/');
     char *last_dot = strrchr(last_comp, '.');
-    if (last_dot == NULL && filename[strlen(filename)-1] != '/') {
+    if (last_dot == NULL && filename[strlen(filename) - 1] != '/')
+    {
         strcat(filename, "/");
     }
-    
-    if(filename[strlen(filename)-1] == '/') {
+
+    if (filename[strlen(filename) - 1] == '/')
+    {
         strcat(filename, "index.html");
     }
 
@@ -249,35 +268,38 @@ static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *lo
     // sprintf(header, "%sContent-type: text/html\r\n", header);
     // sprintf(header, "%sConnection: close\r\n", header);
     // sprintf(header, "%sContent-length: %d\r\n\r\n", header, (int)strlen(body));
-    //log_info("header  = \n %s\n", header);
-    //rio_writen(fd, header, strlen(header));
-    //rio_writen(fd, body, strlen(body));
-    //log_info("leave clienterror\n");
+    // log_info("header  = \n %s\n", header);
+    // rio_writen(fd, header, strlen(header));
+    // rio_writen(fd, body, strlen(body));
+    // log_info("leave clienterror\n");
     return;
 }
 
-static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out) {
+static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out)
+{
     char header[MAXLINE];
     char buf[SHORTLINE];
     size_t n;
     struct tm tm;
-    
+
     const char *file_type;
     const char *dot_pos = strrchr(filename, '.');
     file_type = get_file_type(dot_pos);
 
     sprintf(header, "HTTP/1.1 %d %s\r\n", out->status, get_shortmsg_from_status_code(out->status));
 
-    if (out->keep_alive) {
-        sprintf(header, "%sConnection: keep-alive\r\n", header);
-        sprintf(header, "%sKeep-Alive: timeout=%d\r\n", header, TIMEOUT_DEFAULT);
-    }
+    // if (out->keep_alive)
+    // {
+    //     sprintf(header, "%sConnection: keep-alive\r\n", header);
+    //     sprintf(header, "%sKeep-Alive: timeout=%d\r\n", header, TIMEOUT_DEFAULT);
+    // }
 
-    if (out->modified) {
+    if (out->modified)
+    {
         sprintf(header, "%sContent-type: %s\r\n", header, file_type);
         sprintf(header, "%sContent-length: %zu\r\n", header, filesize);
         localtime_r(&(out->mtime), &tm);
-        strftime(buf, SHORTLINE,  "%a, %d %b %Y %H:%M:%S GMT", &tm);
+        strftime(buf, SHORTLINE, "%a, %d %b %Y %H:%M:%S GMT", &tm);
         sprintf(header, "%sLast-Modified: %s\r\n", header, buf);
     }
 
@@ -286,12 +308,14 @@ static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t 
 
     n = (size_t)rio_writen(fd, header, strlen(header));
     check(n == strlen(header), "rio_writen error, errno = %d", errno);
-    if (n != strlen(header)) {
-        log_err("n != strlen(header)");
-        goto out; 
+    if (n != strlen(header))
+    {
+        zlog_error(g_zc, "n != strlen(header)");
+        goto out;
     }
 
-    if (!out->modified) {
+    if (!out->modified)
+    {
         goto out;
     }
 
@@ -299,11 +323,11 @@ static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t 
     check(srcfd > 2, "open error");
     // can use sendfile
     char *srcaddr = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
-    check(srcaddr != (void *) -1, "mmap error");
+    check(srcaddr != (void *)-1, "mmap error");
     close(srcfd);
 
     n = rio_writen(fd, srcaddr, filesize);
-    // check(n == filesize, "rio_writen error");
+    check(n == filesize, "rio_writen error");
 
     munmap(srcaddr, filesize);
 
@@ -311,14 +335,16 @@ out:
     return;
 }
 
-static const char* get_file_type(const char *type)
+static const char *get_file_type(const char *type)
 {
-    if (type == NULL) {
+    if (type == NULL)
+    {
         return "text/plain";
     }
 
     int i;
-    for (i = 0; zaver_mime[i].type != NULL; ++i) {
+    for (i = 0; zaver_mime[i].type != NULL; ++i)
+    {
         if (strcmp(type, zaver_mime[i].type) == 0)
             return zaver_mime[i].value;
     }

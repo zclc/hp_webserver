@@ -1,5 +1,6 @@
 # cmake
 build
+.*
 
 # Prerequisites
 *.d

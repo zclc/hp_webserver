@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project (main)
 
 
+
 add_subdirectory("zlog")
 
 file(GLOB SOURCES "src/*.c")
