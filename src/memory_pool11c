@@ -101,7 +101,7 @@ int memorypool_create(unsigned char blocks)
 void* Allocate(TYPEINPOOL poolType)
 {
     Chunk* chunk = mpool[poolType].chunksHead->next;
-    int blockSize = mpool[poolType].blockSize;
+    unsigned char blockSize = mpool[poolType].blockSize;
     unsigned char* presult = NULL;
 
     // 遍历链表查找可用的chunk
@@ -118,7 +118,6 @@ void* Allocate(TYPEINPOOL poolType)
             // 申请成功 头插到head链表中
             newChunk->next = mpool[poolType].chunksHead->next;
             mpool[poolType].chunksHead->next = newChunk;
-            mpool[poolType].blank_chunk_num++;
 
             chunk = newChunk;
         } 
@@ -126,18 +125,6 @@ void* Allocate(TYPEINPOOL poolType)
         // 该块有可用的block
         if(chunk->blocksAvailable > 0)
         {
-            if(chunk->blocksAvailable == mpool[poolType].blocks)
-            {
-                if(mpool[poolType].blank_chunk_num > 0)
-                {
-                    mpool[poolType].blank_chunk_num--;
-                }
-                else
-                {
-                    log_err(" mpool[poolType].blank_chunk_num != 0");
-                }
-            }
-
             presult = chunk->pData + (chunk->firstAvailableBlock)*(blockSize);
             
             // 更新该chunk的信息
@@ -153,7 +140,7 @@ void* Allocate(TYPEINPOOL poolType)
 
 Chunk* VicinityFind(void* p, TYPEINPOOL poolType)
 {
-    int chunkLength = mpool[poolType].blocks * mpool[poolType].blockSize;
+    size_t chunkLength = mpool[poolType].blocks * mpool[poolType].blockSize;
     Chunk* curChunk = mpool[poolType].chunksHead->next;
     unsigned char* uchP = (unsigned char*)p;
 
@@ -173,16 +160,17 @@ Chunk* VicinityFind(void* p, TYPEINPOOL poolType)
 
 void Deallocate(void* p, TYPEINPOOL poolType)
 {
+    debug("p = %p", p);
     Chunk* deallocChunk = VicinityFind(p, poolType);
     check_exit(deallocChunk != NULL, "p not own memory pool");
     
-    int blockSize = mpool[poolType].blockSize;
+    unsigned char blockSize = mpool[poolType].blockSize;
     /* p在chunk中的位置 */
     unsigned char* toRelease = (unsigned char*)p;
     *toRelease = deallocChunk->firstAvailableBlock; /* p的下一个可用block为当前的firstAvailableBlock */
 
     /* 更新最新的availableBlock为 p所在block */
-    deallocChunk->firstAvailableBlock = (int)(toRelease - deallocChunk->pData)/blockSize;
+    deallocChunk->firstAvailableBlock = (unsigned char)(toRelease - deallocChunk->pData)/blockSize;
 
     // 该chunk的可用区块+1
     deallocChunk->blocksAvailable++;

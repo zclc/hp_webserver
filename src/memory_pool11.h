@@ -35,7 +35,7 @@ typedef struct
     Chunk* alloctorChunk; // 指向将要分配块
     Chunk* dealloctorChunk; // 指向将要删除块
     unsigned char blocks; // 一个chunk拥有多少个block
-    int blockSize; // 一个block的大小
+    unsigned char blockSize; // 一个block的大小
     unsigned char blank_chunk_num; // 空闲的chunk个数
 }FixedAllocor;
 

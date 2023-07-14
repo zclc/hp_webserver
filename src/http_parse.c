@@ -51,7 +51,6 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
         p = (unsigned char *)&r->buf[pi % MAX_BUF]; // p 指向待处理字符
         
         ch = *p;  
-        zlog_warn(g_zc, "aaa");
         switch (state) {
 
         /* HTTP methods: GET, HEAD, POST */
@@ -322,7 +321,7 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
     state = r->state; // 初始状态sw_start
     check(state == 0, "state should be 0");
 
-    zlog_info(g_zc, "ready to parese request body, start = %d, last= %d", r->pos, r->last);
+    // zlog_info(g_zc, "ready to parese request body, start = %d, last= %d", r->pos, r->last);
 
     zv_http_header_t *hd; 
     for (pi = r->pos; pi < r->last; pi++) {

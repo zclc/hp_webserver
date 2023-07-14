@@ -43,7 +43,7 @@ ssize_t rio_writen(int fd, void *usrbuf, size_t n)
             if (errno == EINTR)  /* interrupted by sig handler return */
                 nwritten = 0;    /* and call write() again */
             else {
-                log_err("errno == %d\n", errno);
+                // log_err("errno == %d\n", errno);
                 return -1;       /* errorno set by write() */
             }
         }

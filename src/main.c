@@ -173,7 +173,6 @@ int main(int argc, char* argv[]) {
      */
     // zv_timer_init();
 
-    log_info("zaver started.");
     int n;
     int i, fd;
     int time;
@@ -208,7 +207,7 @@ int main(int argc, char* argv[]) {
 
                     rc = make_socket_non_blocking(infd);
                     check(rc == 0, "make_socket_non_blocking");
-                    zlog_info(g_zc,"new connection fd %d", infd);
+                    // zlog_info(g_zc,"new connection fd %d", infd);
                     
                     // 内存池TODO
                     // zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
@@ -235,19 +234,13 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                zlog_info(g_zc,"new data from fd %d", fd);
+                // zlog_info(g_zc,"new data from fd %d", fd);
 
                 zv_http_request_t *request = (zv_http_request_t *)(events[i].data.ptr);
 
-                // log_info("--- &(r->list) = %p\n----",  &(request->list));
-                // printf("(r->list).next %p\n", (request->list).next);
-                // printf("(r->list).prev %p\n", (request->list).prev);
-                zlog_info(g_zc, "[%p]", &request->list);
-                zlog_info(g_zc, "[%p]", &(request->list).next);
+                // zlog_info(g_zc, "[%p]", &request->list);
+                // zlog_info(g_zc, "[%p]", &(request->list).next);
                 (request->list).next =  &(request->list);
-                // printf("--- &(r->list) = %p\n----",  &(request->list));
-                // printf("(r->list).next %p\n", (request->list).next);
-                // printf("(r->list).prev %p\n", (request->list).prev);
                 
                 rc = threadpool_add(tp, do_request, events[i].data.ptr);
                 check(rc == 0, "threadpool_add");

@@ -40,7 +40,7 @@ int zv_init_request_t(zv_http_request_t *r, int fd, int epfd, zv_conf_t *cf) {
     r->root = cf->root;
     INIT_LIST_HEAD(&(r->list));
 
-    zlog_info(g_zc, "zv_init_request_t ZV_OK");
+    // zlog_info(g_zc, "zv_init_request_t ZV_OK");
     return ZV_OK;
 }
 
@@ -80,7 +80,7 @@ void zv_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
             header_in++) {
             if (strncmp(hd->key_start, header_in->name, hd->key_end - hd->key_start) == 0) {
             
-                zlog_info(g_zc, "key = %.*s, value = %.*s", hd->key_end-hd->key_start, hd->key_start, hd->value_end-hd->value_start, hd->value_start);
+                // zlog_info(g_zc, "key = %.*s, value = %.*s", hd->key_end-hd->key_start, hd->key_start, hd->value_end-hd->value_start, hd->value_start);
                 len = hd->value_end - hd->value_start;
                 (*(header_in->handler))(r, o, hd->value_start, len);
                 break;
@@ -107,7 +107,7 @@ int zv_http_close_conn(zv_http_request_t *r) {
     //     free(pos);
     // }
     
-    zlog_info(g_zc, "Deallocate");
+    // zlog_info(g_zc, "Deallocate");
     if(r)
         Deallocate(r, MEMPOOL_HTTP_REQUESET_T);
     

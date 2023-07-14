@@ -1,0 +1,35 @@
+2023-07-14 17:30:32.427873 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:43) - zv_init_request_t ZV_OK
+2023-07-14 17:30:35.123662 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:210) - new connection fd 5
+2023-07-14 17:30:35.123770 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:43) - zv_init_request_t ZV_OK
+2023-07-14 17:30:35.123823 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:241) - new data from fd 5
+2023-07-14 17:30:35.123905 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:110) - Deallocate
+2023-07-14 17:30:35.124116 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:110) - Deallocate
+2023-07-14 17:30:36.124952 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:210) - new connection fd 5
+2023-07-14 17:30:36.125084 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:43) - zv_init_request_t ZV_OK
+2023-07-14 17:30:36.125112 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:210) - new connection fd 6
+2023-07-14 17:30:36.125121 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:43) - zv_init_request_t ZV_OK
+2023-07-14 17:30:36.125137 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:210) - new connection fd 7
+2023-07-14 17:30:36.125162 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:43) - zv_init_request_t ZV_OK
+2023-07-14 17:30:36.125180 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:210) - new connection fd 8
+2023-07-14 17:30:36.125188 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:43) - zv_init_request_t ZV_OK
+2023-07-14 17:30:36.125204 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:210) - new connection fd 9
+2023-07-14 17:30:36.125212 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:43) - zv_init_request_t ZV_OK
+2023-07-14 17:30:36.125229 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:210) - new connection fd 10
+2023-07-14 17:30:36.125237 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:43) - zv_init_request_t ZV_OK
+2023-07-14 17:30:36.125253 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:210) - new connection fd 11
+2023-07-14 17:30:36.125261 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:43) - zv_init_request_t ZV_OK
+2023-07-14 17:30:36.125284 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:241) - new data from fd 8
+2023-07-14 17:30:36.125336 INFO   (/root/unp/myhttpv2/hp_webserver/src/http.c:115) - method == GET
+2023-07-14 17:30:36.125349 INFO   (/root/unp/myhttpv2/hp_webserver/src/http.c:116) - uri == /
+2023-07-14 17:30:36.125357 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_parse.c:325) - ready to parese request body, start = 16, last= 61
+2023-07-14 17:30:36.126499 INFO   (/root/unp/myhttpv2/hp_webserver/src/http.c:168) - no keep_alive! ready to close
+2023-07-14 17:30:36.126562 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:110) - Deallocate
+2023-07-14 17:30:36.126580 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:241) - new data from fd 8
+2023-07-14 17:30:36.126625 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:110) - Deallocate
+2023-07-14 17:30:36.126639 INFO   (/root/unp/myhttpv2/hp_webserver/src/main.c:241) - new data from fd 11
+2023-07-14 17:30:36.126692 INFO   (/root/unp/myhttpv2/hp_webserver/src/http.c:115) - method == GET
+2023-07-14 17:30:36.126707 INFO   (/root/unp/myhttpv2/hp_webserver/src/http.c:116) - uri == /
+2023-07-14 17:30:36.126719 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_parse.c:325) - ready to parese request body, start = 16, last= 61
+2023-07-14 17:30:36.126715 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:110) - Deallocate
+2023-07-14 17:30:36.126827 INFO   (/root/unp/myhttpv2/hp_webserver/src/http.c:168) - no keep_alive! ready to close
+2023-07-14 17:30:36.126862 INFO   (/root/unp/myhttpv2/hp_webserver/src/http_request.c:110) - Deallocate

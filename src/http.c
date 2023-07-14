@@ -102,7 +102,7 @@ void do_request(void *ptr)
         r->last += n;
         check(r->last - r->pos < MAX_BUF, "request buffer overflow!");
 
-        log_info("ready to parse request line");
+        // log_info("ready to parse request line");
         // 处理http对象的请求行
         rc = zv_http_parse_request_line(r);
         if (rc == ZV_AGAIN)
@@ -116,10 +116,10 @@ void do_request(void *ptr)
             goto err;
         }
 
-        zlog_info(g_zc, "method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
-        zlog_info(g_zc, "uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
+        // zlog_info(g_zc, "method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
+        // zlog_info(g_zc, "uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
 
-        zlog_info(g_zc, "ready to parse request body");
+        // zlog_info(g_zc, "ready to parse request body");
         // 处理http对象的请求体
         rc = zv_http_parse_request_body(r);
         if (rc == ZV_AGAIN)
@@ -196,9 +196,7 @@ void do_request(void *ptr)
 
 err:
 close:
-    log_info("rc rc before");
     rc = zv_http_close_conn(r);
-    log_info("rc rc");
     check(rc == 0, "do_request: zv_http_close_conn");
 }
 
@@ -212,12 +210,12 @@ static void parse_uri(char *uri, int uri_length, char *filename, char *querystri
     if (question_mark)
     {
         file_length = (int)(question_mark - uri);
-        debug("file_length = (question_mark - uri) = %d", file_length);
+        // debug("file_length = (question_mark - uri) = %d", file_length);
     }
     else
     {
         file_length = uri_length;
-        debug("file_length = uri_length = %d", file_length);
+        // debug("file_length = uri_length = %d", file_length);
     }
 
     if (querystring)
@@ -234,7 +232,7 @@ static void parse_uri(char *uri, int uri_length, char *filename, char *querystri
         return;
     }
 
-    debug("before strncat, filename = %s, uri = %.*s, file_len = %d", filename, file_length, uri, file_length);
+    // debug("before strncat, filename = %s, uri = %.*s, file_len = %d", filename, file_length, uri, file_length);
     strncat(filename, uri, file_length);
 
     char *last_comp = strrchr(filename, '/');
@@ -249,7 +247,7 @@ static void parse_uri(char *uri, int uri_length, char *filename, char *querystri
         strcat(filename, "index.html");
     }
 
-    log_info("filename = %s", filename);
+    // log_info("filename = %s", filename);
     return;
 }
 
@@ -288,11 +286,11 @@ static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t 
 
     sprintf(header, "HTTP/1.1 %d %s\r\n", out->status, get_shortmsg_from_status_code(out->status));
 
-    // if (out->keep_alive)
-    // {
-    //     sprintf(header, "%sConnection: keep-alive\r\n", header);
-    //     sprintf(header, "%sKeep-Alive: timeout=%d\r\n", header, TIMEOUT_DEFAULT);
-    // }
+    if (out->keep_alive)
+    {
+        sprintf(header, "%sConnection: keep-alive\r\n", header);
+        sprintf(header, "%sKeep-Alive: timeout=%d\r\n", header, 20);
+    }
 
     if (out->modified)
     {
@@ -327,7 +325,7 @@ static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t 
     close(srcfd);
 
     n = rio_writen(fd, srcaddr, filesize);
-    check(n == filesize, "rio_writen error");
+    // check(n == filesize, "rio_writen error");
 
     munmap(srcaddr, filesize);
 

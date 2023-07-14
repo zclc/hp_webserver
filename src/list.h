@@ -41,13 +41,7 @@ static inline void __list_add(struct list_head *_new, struct list_head *prev, st
 }
 
 static inline void list_add(struct list_head *_new, struct list_head *head) {
-    
-    printf("head = %p\n", head);
-    printf("_new = %p\n", _new);
-    printf("head->next = %p\n", head->next);
     __list_add(_new, head, head->next);
-
-    printf("add");
 }
 
 static inline void list_add_tail(struct list_head *_new, struct list_head *head) {
