@@ -14,7 +14,7 @@
 可以修改zaver.conf 中端口的设置，默认8888端口
 1. `cmake -B build`
 2. `cmake --build build`
-3. `./build/zaver -c zaver.conf`
+3. `./build/main -c conf/main.conf`
 
 ## 项目演示
 
