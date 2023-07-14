@@ -1,9 +1,3 @@
-
-/*
- * Copyright (C) Zhu Jiashun
- * Copyright (C) Zaver
- */
-
 #include <sys/time.h>
 #include "timer.h"
 

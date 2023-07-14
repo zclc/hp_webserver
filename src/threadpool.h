@@ -1,9 +1,3 @@
-
-/*
- * Copyright (C) Zhu Jiashun
- * Copyright (C) Zaver
- */
-
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 

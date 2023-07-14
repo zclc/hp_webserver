@@ -1,9 +1,3 @@
-
-/*
- * Copyright (C) Zhu Jiashun
- * Copyright (C) Zaver
- */
-
 #ifndef UTIL_H
 #define UTIL_H
 

@@ -1,9 +1,3 @@
-
-/*
- * Copyright (C) Zhu Jiashun
- * Copyright (C) Zaver
- */
-
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>

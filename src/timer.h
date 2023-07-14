@@ -1,9 +1,3 @@
-
-/*
- * Copyright (C) Zhu Jiashun
- * Copyright (C) Zaver
- */
-
 #ifndef ZV_TIMER_H
 #define ZV_TIMER_H
 
