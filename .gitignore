@@ -2,6 +2,7 @@
 build
 .gdb_history
 zlogdemo.log
+test.sh
 
 # Prerequisites
 *.d
