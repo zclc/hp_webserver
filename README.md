@@ -4,21 +4,21 @@
 一款轻量级，高性能的httpserver
 
 **关键特性：**
-* 实现http get，post和长连接请求
-* 无锁队列的线程池
+* 有限状态机解析http请求
+* 线程池
 * 内存池
-* zlog日志
 * 堆定时器
+* zlog日志
 
 ## 构建运行
-可以修改zaver.conf 中端口的设置，默认8888端口
+可以修改conf/main.conf 中端口的设置，默认8888端口
 1. `cmake -B build`
 2. `cmake --build build`
 3. `./build/main -c conf/main.conf`
 
-## 项目演示
+## 运行演示
+![演示gif](/html/webserver.gif)
 
+## 项目结构
 
-## 性能测试
-webech测试结果
-
+![websever整体结构](/html/websever.png)

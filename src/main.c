@@ -116,8 +116,6 @@ int main(int argc, char* argv[]) {
     check(rc == ZV_CONF_OK, "read conf err");
 
     memorypool_create(64);
-
-
     /*
     *   install signal handle for SIGPIPE
     *   when a fd is closed by remote, writing to this fd will cause system send
@@ -163,7 +161,6 @@ int main(int argc, char* argv[]) {
     /*
     * create thread pool
     */
-    
     zv_threadpool_t *tp = threadpool_init(cf.thread_num);
     check(tp != NULL, "threadpool_init error");
     
@@ -171,8 +168,7 @@ int main(int argc, char* argv[]) {
     /*
      * initialize timer
      */
-    // zv_timer_init();
-
+    zv_timer_init();
     int n;
     int i, fd;
     int time;
