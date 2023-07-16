@@ -16,7 +16,8 @@
 #include "http_request.h"
 #include "epoll.h"
 #include "error.h"
-// #include "timer.h"
+#include "timer.h"
+#include <stdint.h>
 
 extern zlog_category_t *g_zc;
 
@@ -70,7 +71,6 @@ void do_request(void *ptr)
         // plast 指向 buf中需要写入数据的第一个位置
         plast = &r->buf[r->last % MAX_BUF];
         remain_size = MIN(MAX_BUF - (r->last - r->pos) - 1, MAX_BUF - r->last % MAX_BUF);
-
         // check(INT_MAX - r->last < MAX_BUF, "request buffer overflow!");
 
         // 将读到的信息追加到buf中
@@ -174,24 +174,24 @@ void do_request(void *ptr)
 
         serve_static(fd, filename, sbuf.st_size, out);
 
-        // if (!out->keep_alive)
-        // {
-        //     zlog_info(g_zc, "no keep_alive! ready to close");
+        if (!out->keep_alive)
+        {
+            zlog_info(g_zc, "no keep_alive! ready to close");
 
-        //     free(out);
-        //     goto close;
-        // }
+            free(out);
+            goto close;
+        }
 
         free(out);
         goto close;
     }
 
     // fd 没有数据可读 errno == EAGAIN
-    // struct epoll_event event;
-    // event.data.ptr = ptr;
-    // event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
-    // zv_epoll_mod(r->epfd, r->fd, &event);
-    // zv_add_timer(r, TIMEOUT_DEFAULT, zv_http_close_conn);
+    struct epoll_event event;
+    event.data.ptr = ptr;
+    event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+    zv_epoll_mod(r->epfd, r->fd, &event);
+    zv_add_timer(r, TIMEOUT_DEFAULT, zv_http_close_conn);
     return;
 
 err:
@@ -255,21 +255,21 @@ static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *lo
 {
     char header[MAXLINE], body[MAXLINE];
 
-    // sprintf(body, "<html><title>Zaver Error</title>");
-    // sprintf(body, "%s<body bgcolor=""ffffff"">\n", body);
-    // sprintf(body, "%s%s: %s\n", body, errnum, shortmsg);
-    // sprintf(body, "%s<p>%s: %s\n</p>", body, longmsg, cause);
-    // sprintf(body, "%s<hr><em>Zaver web server</em>\n</body></html>", body);
+    sprintf(body, "<html><title>Zaver Error</title>");
+    sprintf(body, "%s<body bgcolor=""ffffff"">\n", body);
+    sprintf(body, "%s%s: %s\n", body, errnum, shortmsg);
+    sprintf(body, "%s<p>%s: %s\n</p>", body, longmsg, cause);
+    sprintf(body, "%s<hr><em>Zaver web server</em>\n</body></html>", body);
 
-    // sprintf(header, "HTTP/1.1 %s %s\r\n", errnum, shortmsg);
-    // sprintf(header, "%sServer: Zaver\r\n", header);
-    // sprintf(header, "%sContent-type: text/html\r\n", header);
-    // sprintf(header, "%sConnection: close\r\n", header);
-    // sprintf(header, "%sContent-length: %d\r\n\r\n", header, (int)strlen(body));
-    // log_info("header  = \n %s\n", header);
-    // rio_writen(fd, header, strlen(header));
-    // rio_writen(fd, body, strlen(body));
-    // log_info("leave clienterror\n");
+    sprintf(header, "HTTP/1.1 %s %s\r\n", errnum, shortmsg);
+    sprintf(header, "%sServer: Zaver\r\n", header);
+    sprintf(header, "%sContent-type: text/html\r\n", header);
+    sprintf(header, "%sConnection: close\r\n", header);
+    sprintf(header, "%sContent-length: %d\r\n\r\n", header, (int)strlen(body));
+    log_info("header  = \n %s\n", header);
+    rio_writen(fd, header, strlen(header));
+    rio_writen(fd, body, strlen(body));
+    log_info("leave clienterror\n");
     return;
 }
 

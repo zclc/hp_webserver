@@ -15,7 +15,7 @@
 #include <zlog.h>
 
 #include "util.h"
-// #include "timer.h"
+#include "timer.h"
 #include "http.h"
 #include "epoll.h"
 #include "threadpool.h"
@@ -179,11 +179,11 @@ int main(int argc, char* argv[]) {
 
     /* epoll_wait loop */
     while (1) {
-        //time = zv_find_timer();
+        time = zv_find_timer();
         zlog_debug(g_zc,"wait time = %d", time);
         n = zv_epoll_wait(epfd, events, MAXEVENTS, 0);
         // 处理超时链接
-        // zv_handle_expire_timers();
+        zv_handle_expire_timers();
         
         for (i = 0; i < n; i++) {
             zv_http_request_t *r = (zv_http_request_t *)events[i].data.ptr;

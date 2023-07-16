@@ -1,6 +1,7 @@
 # cmake
 build
-.*
+.gdb_history
+zlogdemo.log
 
 # Prerequisites
 *.d
